@@ -29,7 +29,22 @@ function toTerms(value: string) {
     .toLowerCase()
     .split(/[^a-z0-9]+/i)
     .map((term) => term.trim())
-    .filter((term) => term && term.length >= 3 && !STOP_WORDS.has(term));
+    .filter((term) => term && !STOP_WORDS.has(term))
+    .flatMap((term) => {
+      const variants = new Set<string>();
+      variants.add(term);
+
+      // Keep meaningful short acronyms like "ai".
+      if (term.length >= 3) {
+        if (term.endsWith("ies") && term.length > 4) {
+          variants.add(`${term.slice(0, -3)}y`);
+        } else if (term.endsWith("s") && !term.endsWith("ss") && term.length > 3) {
+          variants.add(term.slice(0, -1));
+        }
+      }
+
+      return [...variants].filter((variant) => variant.length >= 2);
+    });
 }
 
 function scoreEvent(event: EventRecord, topic: string, location: string) {
